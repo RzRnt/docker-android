@@ -13,39 +13,54 @@ function prepare_geny_cloud() {
 
 	# Start device(s)
 	created_instances=()
-	echo "Creating device(s) based on given json file..."
-	for row in $(echo "${contents}" | jq -r '.[] | @base64'); do
-		get_value() {
-			echo ${row} | base64 --decode | jq -r ${1}
-    	}
+	if [ -z "$GENY_TEMPLATE" ]; then
+		echo "Creating device(s) based on given json file..."
+		for row in $(echo "${contents}" | jq -r '.[] | @base64'); do
+			get_value() {
+				echo ${row} | base64 --decode | jq -r ${1}
+			}
 
-	    template=$(get_value '.template')
-	    device=$(get_value '.device')
-	    port=$(get_value '.port')
+			template=$(get_value '.template')
+			device=$(get_value '.device')
+			port=$(get_value '.port')
 
-		if [[ $device != null ]]; then
-			echo "Starting \"$device\" with template name \"$template\"..."
-			instance_uuid=$(gmsaas instances start "${template}" "${device}")
-		else
-			echo "Starting Device with Random name..."
-			random_device_name=$(python3  -c 'import uuid; print(str(uuid.uuid4()).upper())')
-			instance_uuid=$(gmsaas instances start "${template}" "${random_device_name}")
-		fi
+			if [[ $device != null ]]; then
+				echo "Starting \"$device\" with template name \"$template\"..."
+				instance_uuid=$(gmsaas instances start "${template}" "${device}")
+			else
+				echo "Starting Device with Random name..."
+				random_device_name=$(python3  -c 'import uuid; print(str(uuid.uuid4()).upper())')
+				instance_uuid=$(gmsaas instances start "${template}" "${random_device_name}")
+			fi
 
-	    echo "Instance-ID: \"$instance_uuid\""
-	    created_instances+=("${instance_uuid}")
+			echo "Instance-ID: \"$instance_uuid\""
+			created_instances+=("${instance_uuid}")
 
-	    if [[ $port != null ]]; then
-			echo "Connect device on port \"$port\"..."
-			gmsaas instances adbconnect "${instance_uuid}" --adb-serial-port "${port}"
-	    else
-			echo "Connect device on port..."
-			gmsaas instances adbconnect "${instance_uuid}"
-	    fi
-	done
+			if [[ $port != null ]]; then
+				echo "Connect device on port \"$port\"..."
+				gmsaas instances adbconnect "${instance_uuid}" --adb-serial-port "${port}"
+			else
+				echo "Connect device on port..."
+				gmsaas instances adbconnect "${instance_uuid}"
+			fi
+		done
+	else
+		echo "Creating device based on $GENY_TEMPLATE..."
+		echo "Starting device with Random name..."
+		random_device_name=$(python3  -c 'import uuid; print(str(uuid.uuid4()).upper())')
+		instance_uuid=$(gmsaas instances start "${GENY_TEMPLATE}" "${random_device_name}")
 
+		echo "Instance-ID: \"$instance_uuid\""
+		created_instances+=("${instance_uuid}")
+
+		echo "Connect device on port..."
+		gmsaas instances adbconnect "${instance_uuid}"
+	fi
 	# Store created instances in a file
 	echo "All created instances: ${created_instances[@]}"
+	if [ ! -d "/root/tmp/" ]; then
+		mkdir "/root/tmp/"
+	fi
 	echo "${created_instances[@]}" > "${INSTANCES_PATH}"
 }
 

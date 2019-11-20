@@ -24,7 +24,7 @@ if [ -z "$TEMPLATE" ]; then
     esac
 fi
 
-if [ ! -f "$TEMPLATE" ]; then
+if [ ! -f "$TEMPLATE" ] && [ -z "$GENY_TEMPLATE" ]; then
     echo "File not found! Nothing to do!"
     exit 1
 fi
