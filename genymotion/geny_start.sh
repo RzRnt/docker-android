@@ -18,8 +18,10 @@ if [ -z "$TEMPLATE" ]; then
         TEMPLATE="/root/tmp/aws.json"
         ;;
     *)
-        "Type $TYPE is not supported! Valid types: ${types[@]}"
-        exit 1
+        if [ -z "$GENY_TEMPLATE" ]; then
+            "Type $TYPE is not supported! Valid types: ${types[@]}"
+            exit 1
+        fi
         ;;
     esac
 fi
