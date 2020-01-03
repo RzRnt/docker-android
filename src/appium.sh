@@ -389,3 +389,8 @@ else
 	echo "Using Emulator"
 	python3 -m src.app
 fi
+
+if [ "$WAIT_FOR_GENY_DEVICE" = true ]; then
+	echo "Waiting For Device for 60s..."
+	timeout 60 adb wait-for-any-device
+fi
